@@ -1,0 +1,49 @@
+# Build outputs
+build/
+**/build/
+cmake-build-*/
+
+# Qt Creator
+**/.qtc_clangd/
+**/CMakeLists.txt.user
+**/*.user
+
+# CMake
+compile_commands.json
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+!CMakeLists.txt
+!**/CMakeLists.txt
+
+# Generated / autogen
+**/moc_*.cpp
+**/qrc_*.cpp
+**/*_autogen/
+**/.qt/
+**/.rcc/
+**/meta_types/
+**/*_qmltyperegistrations.cpp
+**/qmltypes/
+**/LiteFrame/qmldir
+**/LiteFrame/*.qmltypes
+
+# macOS
+.DS_Store
+*.app/Contents/MacOS/lf-editor
+
+# IDE
+.idea/
+.vscode/
+.cache/
+**/.cache/
+*.swp
+*~
+
+# Binaries
+*.o
+*.a
+*.so
+*.dylib
+*.exe

@@ -7,7 +7,8 @@ qt_policy(SET QTP0004 NEW)
 
 qt_add_executable(lf_editor_app
     main.cpp
-    editor_controller.cpp
+    preview_controller.cpp
+    transport_controller.cpp
 )
 
 qt_add_qml_module(lf_editor_app
@@ -15,6 +16,9 @@ qt_add_qml_module(lf_editor_app
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/PreviewPanel.qml
+        qml/TransportBar.qml
+        qml/StatusBar.qml
     SOURCES
         preview_item.cpp
         preview_item.h

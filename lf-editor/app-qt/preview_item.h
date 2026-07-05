@@ -3,9 +3,7 @@
 #include <QQuickFramebufferObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace lf {
-class Editor;
-}
+class PreviewController;
 
 class PreviewItem : public QQuickFramebufferObject {
     Q_OBJECT
@@ -16,7 +14,7 @@ public:
     explicit PreviewItem(QQuickItem* parent = nullptr);
     ~PreviewItem() override;
 
-    void bindEditor(lf::Editor* editor);
+    Q_INVOKABLE void bindPreviewController(PreviewController* controller);
 
     bool hasMedia() const;
     void setHasMedia(bool hasMedia);
@@ -32,6 +30,6 @@ private:
 
     void requestRedraw();
 
-    lf::Editor* editor_    = nullptr;
-    bool        has_media_ = false;
+    PreviewController* controller_ = nullptr;
+    bool               has_media_  = false;
 };

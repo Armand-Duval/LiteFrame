@@ -2,16 +2,13 @@
 
 #include <QObject>
 #include <QTimer>
-#include <memory>
 #include <string>
-
-class PreviewItem;
 
 namespace lf {
 class Editor;
 }
 
-class EditorController : public QObject {
+class TransportController : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(double position READ position NOTIFY positionChanged)
@@ -22,8 +19,8 @@ class EditorController : public QObject {
     Q_PROPERTY(bool seeking READ seeking WRITE setSeeking NOTIFY seekingChanged)
 
 public:
-    explicit EditorController(QObject* parent = nullptr);
-    ~EditorController() override;
+    explicit TransportController(lf::Editor* editor, QObject* parent = nullptr);
+    ~TransportController() override;
 
     double  position() const;
     double  duration() const;
@@ -34,7 +31,6 @@ public:
 
     void setSeeking(bool seeking);
 
-    Q_INVOKABLE void attachPreview(QObject* preview);
     Q_INVOKABLE bool openMedia(const QString& path);
     Q_INVOKABLE bool exportTimeline(const QString& outputPath);
     Q_INVOKABLE void play();
@@ -52,15 +48,14 @@ signals:
     void exportFailed(const QString& message);
 
 private slots:
-    void pollPlayer();
+    void pollTransport();
 
 private:
     void refreshTransportState();
     void setStatusMessage(const QString& message);
 
-    std::unique_ptr<lf::Editor> editor_;
-    PreviewItem*                preview_ = nullptr;
-    QTimer*                     poll_timer_ = nullptr;
+    lf::Editor* editor_     = nullptr;
+    QTimer*     poll_timer_ = nullptr;
 
     QString media_path_;
     QString status_message_;

@@ -1,6 +1,6 @@
 #include "preview_item.h"
 
-#include "lf_editor.h"
+#include "preview_controller.h"
 
 #include <QMetaObject>
 #include <QOpenGLContext>
@@ -17,16 +17,16 @@ public:
     void synchronize(QQuickFramebufferObject* item) override {
         auto* preview = static_cast<PreviewItem*>(item);
 
-        if (editor_ != preview->editor_) {
-            editor_   = preview->editor_;
-            gl_ready_ = false;
+        if (controller_ != preview->controller_) {
+            controller_ = preview->controller_;
+            gl_ready_   = false;
         }
 
         has_media_ = preview->has_media_;
     }
 
     void render() override {
-        if (!editor_ || !has_media_) {
+        if (!controller_ || !has_media_) {
             return;
         }
 
@@ -36,7 +36,7 @@ public:
                 return;
             }
 
-            gl_ready_ = editor_->attach_preview_gl([context](const char* name) -> void* {
+            gl_ready_ = controller_->attach_gl([context](const char* name) -> void* {
                 return reinterpret_cast<void*>(context->getProcAddress(name));
             });
         }
@@ -50,16 +50,16 @@ public:
             return;
         }
 
-        editor_->render_preview(
+        controller_->render(
             static_cast<unsigned int>(fbo->handle()),
             fbo->width(),
             fbo->height());
     }
 
 private:
-    lf::Editor* editor_    = nullptr;
-    bool        has_media_ = false;
-    bool        gl_ready_  = false;
+    PreviewController* controller_ = nullptr;
+    bool               has_media_  = false;
+    bool               gl_ready_   = false;
 };
 
 PreviewItem::PreviewItem(QQuickItem* parent)
@@ -69,24 +69,24 @@ PreviewItem::PreviewItem(QQuickItem* parent)
 }
 
 PreviewItem::~PreviewItem() {
-    if (editor_) {
-        editor_->detach_preview_gl();
+    if (controller_) {
+        controller_->detach_gl();
     }
 }
 
-void PreviewItem::bindEditor(lf::Editor* editor) {
-    if (editor_ == editor) {
+void PreviewItem::bindPreviewController(PreviewController* controller) {
+    if (controller_ == controller) {
         return;
     }
 
-    if (editor_) {
-        editor_->detach_preview_gl();
+    if (controller_) {
+        controller_->detach_gl();
     }
 
-    editor_ = editor;
+    controller_ = controller;
 
-    if (editor_) {
-        editor_->set_preview_redraw_callback([this]() { requestRedraw(); });
+    if (controller_) {
+        controller_->set_redraw_callback([this]() { requestRedraw(); });
     }
 
     update();

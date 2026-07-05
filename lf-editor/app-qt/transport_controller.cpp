@@ -1,6 +1,4 @@
-#include "editor_controller.h"
-
-#include "preview_item.h"
+#include "transport_controller.h"
 
 #include "lf_editor.h"
 
@@ -8,42 +6,42 @@
 #include <QUrl>
 #include <cmath>
 
-EditorController::EditorController(QObject* parent)
+TransportController::TransportController(lf::Editor* editor, QObject* parent)
     : QObject(parent),
-      editor_(std::make_unique<lf::Editor>()) {
+      editor_(editor) {
     poll_timer_ = new QTimer(this);
     poll_timer_->setInterval(16);
-    connect(poll_timer_, &QTimer::timeout, this, &EditorController::pollPlayer);
+    connect(poll_timer_, &QTimer::timeout, this, &TransportController::pollTransport);
     poll_timer_->start();
 }
 
-EditorController::~EditorController() = default;
+TransportController::~TransportController() = default;
 
-double EditorController::position() const {
-    return editor_->position_seconds();
+double TransportController::position() const {
+    return editor_->transport().position_seconds();
 }
 
-double EditorController::duration() const {
-    return editor_->duration_seconds();
+double TransportController::duration() const {
+    return editor_->transport().duration_seconds();
 }
 
-bool EditorController::hasMedia() const {
+bool TransportController::hasMedia() const {
     return has_media_;
 }
 
-QString EditorController::mediaPath() const {
+QString TransportController::mediaPath() const {
     return media_path_;
 }
 
-QString EditorController::statusMessage() const {
+QString TransportController::statusMessage() const {
     return status_message_;
 }
 
-bool EditorController::seeking() const {
+bool TransportController::seeking() const {
     return seeking_;
 }
 
-void EditorController::setSeeking(bool seeking) {
+void TransportController::setSeeking(bool seeking) {
     if (seeking_ == seeking) {
         return;
     }
@@ -51,15 +49,8 @@ void EditorController::setSeeking(bool seeking) {
     emit seekingChanged();
 }
 
-void EditorController::attachPreview(QObject* preview) {
-    preview_ = qobject_cast<PreviewItem*>(preview);
-    if (preview_) {
-        preview_->bindEditor(editor_.get());
-    }
-}
-
-bool EditorController::openMedia(const QString& path) {
-    if (path.isEmpty()) {
+bool TransportController::openMedia(const QString& path) {
+    if (path.isEmpty() || !editor_) {
         return false;
     }
 
@@ -78,19 +69,15 @@ bool EditorController::openMedia(const QString& path) {
     emit mediaPathChanged();
 
     refreshTransportState();
-    last_position_ = editor_->position_seconds();
-    last_duration_ = editor_->duration_seconds();
-
-    if (preview_) {
-        preview_->update();
-    }
+    last_position_ = editor_->transport().position_seconds();
+    last_duration_ = editor_->transport().duration_seconds();
 
     setStatusMessage(tr("Opened: %1").arg(QFileInfo(localPath).fileName()));
     return true;
 }
 
-bool EditorController::exportTimeline(const QString& outputPath) {
-    if (outputPath.isEmpty()) {
+bool TransportController::exportTimeline(const QString& outputPath) {
+    if (outputPath.isEmpty() || !editor_) {
         return false;
     }
 
@@ -107,29 +94,25 @@ bool EditorController::exportTimeline(const QString& outputPath) {
     return true;
 }
 
-void EditorController::play() {
-    editor_->play();
+void TransportController::play() {
+    editor_->transport().play();
 }
 
-void EditorController::pause() {
-    editor_->pause();
+void TransportController::pause() {
+    editor_->transport().pause();
 }
 
-void EditorController::seek(double seconds) {
-    editor_->seek(seconds);
-    last_position_ = editor_->position_seconds();
+void TransportController::seek(double seconds) {
+    editor_->transport().seek(seconds);
+    last_position_ = editor_->transport().position_seconds();
     emit positionChanged();
-
-    if (preview_) {
-        preview_->update();
-    }
 }
 
-void EditorController::pollPlayer() {
-    editor_->poll();
+void TransportController::pollTransport() {
+    editor_->transport().poll();
 
-    const double position = editor_->position_seconds();
-    const double duration = editor_->duration_seconds();
+    const double position = editor_->transport().position_seconds();
+    const double duration = editor_->transport().duration_seconds();
 
     if (!seeking_ && !std::isnan(position) && position != last_position_) {
         last_position_ = position;
@@ -142,12 +125,12 @@ void EditorController::pollPlayer() {
     }
 }
 
-void EditorController::refreshTransportState() {
+void TransportController::refreshTransportState() {
     emit positionChanged();
     emit durationChanged();
 }
 
-void EditorController::setStatusMessage(const QString& message) {
+void TransportController::setStatusMessage(const QString& message) {
     if (status_message_ == message) {
         return;
     }

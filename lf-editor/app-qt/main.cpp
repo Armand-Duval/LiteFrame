@@ -1,4 +1,7 @@
-#include "editor_controller.h"
+#include "preview_controller.h"
+#include "transport_controller.h"
+
+#include "lf_editor.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -20,10 +23,13 @@ int main(int argc, char* argv[]) {
 
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
-    EditorController controller;
+    lf::Editor         editor;
+    TransportController transport(&editor);
+    PreviewController   preview(&editor);
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("controller", &controller);
+    engine.rootContext()->setContextProperty("transport", &transport);
+    engine.rootContext()->setContextProperty("preview", &preview);
     engine.loadFromModule("LiteFrame", "Main");
 
     if (engine.rootObjects().isEmpty()) {

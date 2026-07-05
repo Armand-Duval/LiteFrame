@@ -13,7 +13,39 @@ struct EditorConfig {
 };
 
 class Editor {
+    struct Impl;
+
 public:
+    class Transport {
+    public:
+        void play();
+        void pause();
+        void seek(double seconds);
+        double position_seconds() const;
+        double duration_seconds() const;
+        void poll();
+
+    private:
+        friend class Editor;
+        explicit Transport(Impl* impl);
+
+        Impl* impl_ = nullptr;
+    };
+
+    class Preview {
+    public:
+        void set_redraw_callback(std::function<void()> callback);
+        bool attach_gl(std::function<void*(const char* name)> get_proc);
+        void detach_gl();
+        bool render(unsigned int fbo, int width, int height);
+
+    private:
+        friend class Editor;
+        explicit Preview(Impl* impl);
+
+        Impl* impl_ = nullptr;
+    };
+
     explicit Editor(EditorConfig config = {});
     ~Editor();
 
@@ -23,22 +55,15 @@ public:
     bool load_media(const std::string& path);
     bool export_timeline(const std::string& output_path);
 
-    void play();
-    void pause();
-    void seek(double seconds);
-    double position_seconds() const;
-    double duration_seconds() const;
-
-    void poll();
-
-    void set_preview_redraw_callback(std::function<void()> callback);
-    bool attach_preview_gl(std::function<void*(const char* name)> get_proc);
-    void detach_preview_gl();
-    bool render_preview(unsigned int fbo, int width, int height);
+    Transport&       transport();
+    Preview&         preview();
+    const Transport& transport() const;
+    const Preview&   preview() const;
 
 private:
-    struct Impl;
     std::unique_ptr<Impl> impl_;
+    Transport             transport_;
+    Preview               preview_;
 };
 
 }  // namespace lf

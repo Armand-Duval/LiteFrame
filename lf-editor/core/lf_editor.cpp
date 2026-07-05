@@ -32,8 +32,16 @@ struct Editor::Impl {
     }
 };
 
+Editor::Transport::Transport(Impl* impl)
+    : impl_(impl) {}
+
+Editor::Preview::Preview(Impl* impl)
+    : impl_(impl) {}
+
 Editor::Editor(EditorConfig config)
-    : impl_(std::make_unique<Impl>(std::move(config))) {}
+    : impl_(std::make_unique<Impl>(std::move(config))),
+      transport_(impl_.get()),
+      preview_(impl_.get()) {}
 
 Editor::~Editor() = default;
 
@@ -54,27 +62,36 @@ bool Editor::export_timeline(const std::string& output_path) {
     return impl_->exporter->export_timeline(*impl_->timeline, settings);
 }
 
-void Editor::play() { impl_->playback->play(); }
-void Editor::pause() { impl_->playback->pause(); }
-void Editor::seek(double seconds) { impl_->playback->seek(seconds); }
-double Editor::position_seconds() const { return impl_->playback->position_seconds(); }
-double Editor::duration_seconds() const { return impl_->playback->duration_seconds(); }
-void Editor::poll() { impl_->playback->poll(); }
+Editor::Transport& Editor::transport() { return transport_; }
+Editor::Preview& Editor::preview() { return preview_; }
+const Editor::Transport& Editor::transport() const { return transport_; }
+const Editor::Preview& Editor::preview() const { return preview_; }
 
-void Editor::set_preview_redraw_callback(std::function<void()> callback) {
+void Editor::Transport::play() { impl_->playback->play(); }
+void Editor::Transport::pause() { impl_->playback->pause(); }
+void Editor::Transport::seek(double seconds) { impl_->playback->seek(seconds); }
+double Editor::Transport::position_seconds() const {
+    return impl_->playback->position_seconds();
+}
+double Editor::Transport::duration_seconds() const {
+    return impl_->playback->duration_seconds();
+}
+void Editor::Transport::poll() { impl_->playback->poll(); }
+
+void Editor::Preview::set_redraw_callback(std::function<void()> callback) {
     impl_->preview->set_redraw_callback(std::move(callback));
 }
 
-bool Editor::attach_preview_gl(std::function<void*(const char* name)> get_proc) {
+bool Editor::Preview::attach_gl(std::function<void*(const char* name)> get_proc) {
     return impl_->preview->attach_gl(std::move(get_proc));
 }
 
-void Editor::detach_preview_gl() {
+void Editor::Preview::detach_gl() {
     impl_->preview->detach_gl();
     impl_->preview->set_redraw_callback({});
 }
 
-bool Editor::render_preview(unsigned int fbo, int width, int height) {
+bool Editor::Preview::render(unsigned int fbo, int width, int height) {
     return impl_->preview->render(fbo, width, height);
 }
 
